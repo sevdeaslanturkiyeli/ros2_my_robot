@@ -10,7 +10,6 @@ class AkilliMaviArac(Node):
     def __init__(self):
         super().__init__('akilli_surus_node')
         
-        # 1. Topic Publisher & Subscriber
         self.hiz_yayinici = self.create_publisher(Twist, '/cmd_vel', 10)
         self.konum_dinleyici = self.create_subscription(
             Odometry, 
@@ -18,7 +17,6 @@ class AkilliMaviArac(Node):
             self.odometry_callback, 
             10)
         
-        # 2. Service Server
         self.servis_sunucusu = self.create_service(
             Trigger, 
             '/baslangica_don', 
@@ -32,7 +30,7 @@ class AkilliMaviArac(Node):
         
         self.hedef_mesafe = 2.0
         self.geri_donus_modu = False
-        self.gorev_bitti = False  # YENİ: Robotun tamamen durmasını sağlayacak kilit
+        self.gorev_bitti = False  
         
         self.get_logger().info('Akıllı Sürüş ve Servis Düğümü Başlatıldı!')
 
@@ -47,14 +45,14 @@ class AkilliMaviArac(Node):
 
         hiz_komutu = Twist()
 
-        # MOD 0: TÜM GÖREVLER BİTTİ, PARKA ÇEKİLDİ
+
         if self.gorev_bitti:
             hiz_komutu.linear.x = 0.0
             hiz_komutu.angular.z = 0.0
             self.hiz_yayinici.publish(hiz_komutu)
             return
 
-        # MOD 1: İLERİ GİTME MODU
+
         if not self.geri_donus_modu:
             gidilen_yol = math.sqrt((self.anlik_x - self.baslangic_x)**2 + (self.anlik_y - self.baslangic_y)**2)
             
@@ -65,7 +63,7 @@ class AkilliMaviArac(Node):
                 hiz_komutu.linear.x = 0.0
                 self.get_logger().info('2 Metre tamamlandı. Servis isteği bekleniyor...', throttle_duration_sec=2.0)
         
-        # MOD 2: GERİ DÖNME MODU
+
         else:
             baslangica_kalan_mesafe = math.sqrt((self.anlik_x - self.baslangic_x)**2 + (self.anlik_y - self.baslangic_y)**2)
             
@@ -75,7 +73,7 @@ class AkilliMaviArac(Node):
             else:
                 hiz_komutu.linear.x = 0.0
                 self.geri_donus_modu = False
-                self.gorev_bitti = True  # YENİ: Geri dönünce kilidi kapat, sistem dursun!
+                self.gorev_bitti = True  
                 self.get_logger().info('BAŞLANGIÇ NOKTASINA DÖNÜLDÜ VE PARK EDİLDİ!')
 
         self.hiz_yayinici.publish(hiz_komutu)
@@ -86,7 +84,7 @@ class AkilliMaviArac(Node):
     def geri_don_callback(self, request, response):
         self.get_logger().warn('Başlangıca dön servis isteği alındı! Robot geri çağrılıyor...')
         self.geri_donus_modu = True
-        self.gorev_bitti = False  # Servis gelirse kilidi açıyoruz
+        self.gorev_bitti = False  
         response.success = True
         response.message = "Robot otonom olarak başlangıç noktasına geri döndürülüyor."
         return response
