@@ -4,65 +4,75 @@ from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Twist
 
-class LabirentOtonomNode(Node):
+class MazeAutonomousNode(Node):
     def __init__(self):
-        super().__init__('labirent_otonom_node')
+        super().__init__('maze_autonomous_node')
         
         self.lidar_sub = self.create_subscription(LaserScan, '/scan', self.lidar_callback, 10)
         self.hiz_pub = self.create_publisher(Twist, '/cmd_vel', 10)
         
-        self.kritik_on_mesafe = 0.42  
-        self.get_logger().info('Labirent Kaşifi Aktif!')
+        self.target_linear_speed = 0.15
+        self.turn_speed = 0.65
+        self.critical_distance = 0.40  
+        self.emergency_distance = 0.26  
+        
+        self.get_logger().info('Sharp Turn and Lane Centering Module Activated!')
 
     def lidar_callback(self, msg):
         cmd_vel_msg = Twist()
         ranges = msg.ranges
-        uzunluk = len(ranges)
+        length = len(ranges)
         
-        if uzunluk == 0:
+        if length == 0:
             return
 
-        uc_te_biri = uzunluk // 3
-        sag_isinlar = ranges[:uc_te_biri]
-        on_isinlar = ranges[uc_te_biri : 2*uc_te_biri]
-        sol_isinlar = ranges[2*uc_te_biri:]
+        one_third = length // 3
+        right_beams = ranges[:one_third]
+        front_beams = ranges[one_third : 2*one_third]
+        left_beams = ranges[2*one_third:]
 
-        def temiz_en_yakin_bul(isinlar):
-            gecerli = [x for x in isinlar if msg.range_min < x < msg.range_max]
-            return min(gecerli) if gecerli else float('inf')
+        def get_clean_closest(beams):
+            valid = [x for x in beams if msg.range_min < x < msg.range_max]
+            return min(valid) if valid else float('inf')
 
-        en_yakin_sag = temiz_en_yakin_bul(sag_isinlar)
-        en_yakin_on = temiz_en_yakin_bul(on_isinlar)
-        en_yakin_sol = temiz_en_yakin_bul(sol_isinlar)
+        closest_right = get_clean_closest(right_beams)
+        closest_front = get_clean_closest(front_beams)
+        closest_left = get_clean_closest(left_beams)
 
-        if en_yakin_on > self.kritik_on_mesafe:
-            cmd_vel_msg.linear.x = 0.12    
-            cmd_vel_msg.angular.z = 0.0    
-            self.get_logger().info('Koridor açık, ilerliyorum...', throttle_duration_sec=2.0)
-            
-        else:
-            if en_yakin_on < 0.28:
-                cmd_vel_msg.linear.x = -0.10   
-                if en_yakin_sag > en_yakin_sol:
-                    cmd_vel_msg.angular.z = 0.4   
-                else:
-                    cmd_vel_msg.angular.z = -0.4
-                self.get_logger().error(f'KÖŞEYE SIKIŞTIM! Geri vites yapılıyor... (Ön: {en_yakin_on:.2f}m)')
-            
+        if closest_front < self.emergency_distance:
+            cmd_vel_msg.linear.x = -0.10
+            if closest_right > closest_left:
+                cmd_vel_msg.angular.z = 0.4
             else:
-                cmd_vel_msg.linear.x = 0.02   
-                if en_yakin_sag > en_yakin_sol:
-                    cmd_vel_msg.angular.z = -0.6  
-                    self.get_logger().warn('Önde duvar var, sağa sapıyorum.')
-                else:
-                    cmd_vel_msg.angular.z = 0.6   
-                    self.get_logger().warn('Önde duvar var, sola sapıyorum.')
+                cmd_vel_msg.angular.z = -0.4
+            self.get_logger().error('Stuck! Executing sharp reverse maneuver.')
+
+        elif closest_front < self.critical_distance:
+            cmd_vel_msg.linear.x = 0.01
+            if closest_right > closest_left:
+                cmd_vel_msg.angular.z = -self.turn_speed
+                self.get_logger().warn('Wall ahead! Turning SHARP RIGHT.')
+            else:
+                cmd_vel_msg.angular.z = self.turn_speed
+                self.get_logger().warn('Wall ahead! Turning SHARP LEFT.')
+
+        else:
+            cmd_vel_msg.linear.x = self.target_linear_speed
+            
+            if closest_right < 0.22:
+                cmd_vel_msg.angular.z = 0.18
+            elif closest_left < 0.22:
+                cmd_vel_msg.angular.z = -0.18
+            else:
+                cmd_vel_msg.angular.z = 0.0
+                
+            self.get_logger().info('Path clear, center-driving...', throttle_duration_sec=2.0)
 
         self.hiz_pub.publish(cmd_vel_msg)
 
 def main(args=None):
     rclpy.init(args=args)
-    node = LabirentOtonomNode()
+    node = MazeAutonomousNode()
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
