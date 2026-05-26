@@ -13,10 +13,12 @@ def generate_launch_description():
         SetEnvironmentVariable(name='GZ_SIM_RESOURCE_PATH', value=models_path),
         SetEnvironmentVariable(name='QT_QPA_PLATFORM', value='xcb'),
 
+
         ExecuteProcess(
             cmd=['ign', 'gazebo', '-r', world_path],
             output='screen'
         ),
+
 
         Node(
             package='ros_gz_bridge',
@@ -24,7 +26,11 @@ def generate_launch_description():
             arguments=[
                 '/cmd_vel@geometry_msgs/msg/Twist]gz.msgs.Twist',
                 '/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan',
-                '/tf@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V'
+                '/model/vehicle_blue/tf@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V',
+                '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock'
+            ],
+            remappings=[
+                ('/model/vehicle_blue/tf', '/tf')
             ],
             output='screen'
         )
