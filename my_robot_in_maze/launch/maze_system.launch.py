@@ -27,7 +27,8 @@ def generate_launch_description():
                 '/cmd_vel@geometry_msgs/msg/Twist]gz.msgs.Twist',
                 '/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan',
                 '/model/vehicle_blue/tf@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V',
-                '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock'
+                '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
+                '/odom@nav_msgs/msg/Odometry[gz.msgs.Odometry' # DiffDrive'ın ürettiği standart odom konusu!
             ],
             remappings=[
                 ('/model/vehicle_blue/tf', '/tf')

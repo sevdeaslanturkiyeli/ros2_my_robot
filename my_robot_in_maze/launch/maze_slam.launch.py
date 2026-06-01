@@ -19,6 +19,7 @@ def generate_launch_description():
         ),
 
 
+
         Node(
             package='slam_toolbox',
             executable='async_slam_toolbox_node',
@@ -29,7 +30,25 @@ def generate_launch_description():
                     'odom_frame': 'vehicle_blue/odom',
                     'base_frame': 'vehicle_blue/chassis',
                     'scan_topic': '/scan',
-                    'use_sim_time': True
+                    'use_sim_time': True,
+                    
+
+                    'resolution': 0.02,             
+                    'max_laser_range': 6.0,         
+                    'minimum_travel_distance': 0.1,  
+                    'minimum_travel_heading': 0.1,   
+                    
+
+                    'scan_matcher_search_space_size': 0.4, 
+                    'scan_matcher_beta': 0.5,
+                    
+
+                    'minimum_cooperative_proportion': 0.8,
+                    'link_match_minimum_response_coarse': 0.1,
+                    'link_match_minimum_response_fine': 0.7,
+                    
+                    'transform_timeout': 0.2,
+                    'tf_buffer_duration': 30.0
                 }
             ]
         )
