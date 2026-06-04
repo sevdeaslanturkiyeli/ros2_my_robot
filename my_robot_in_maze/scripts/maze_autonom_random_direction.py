@@ -41,14 +41,17 @@ class MazeAutonomousNode(Node):
         closest_left = get_clean_closest(left_beams)
 
         if closest_front < self.emergency_distance:
-            cmd_vel_msg.linear.x = -0.08
+            cmd_vel_msg.linear.x = -0.18  
+            
+
             if abs(closest_right - closest_left) < 0.05:
-                cmd_vel_msg.angular.z = random.choice([-0.25, 0.25])
+                cmd_vel_msg.angular.z = random.choice([-0.35, 0.35])
             elif closest_right > closest_left:
-                cmd_vel_msg.angular.z = 0.25
+                cmd_vel_msg.angular.z = 0.35  
             else:
-                cmd_vel_msg.angular.z = -0.25
-            self.get_logger().error('Stuck! Executing smooth reverse maneuver.')
+                cmd_vel_msg.angular.z = -0.35 
+                
+            self.get_logger().error('Stuck! Executing FAST smooth reverse maneuver.')
 
         elif closest_front < self.critical_distance:
             cmd_vel_msg.linear.x = 0.0 

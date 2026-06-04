@@ -12,16 +12,28 @@ def generate_launch_description():
 
     return LaunchDescription([
         
-
+        # 1. Gazebo Simülasyonu ve Robotu Dünyaya Doğuran Sistem Launch'ı
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(system_launch_path)
         ),
         
+        # 2. SLAM Toolbox (Harita Motoru) Launch'ı
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(slam_launch_path)
         ),
 
+        # 3. İşlemciyi Kurtaran Statik TF Yayıncısı (LIDAR'ın 10 kHz'lik Çılgınlığını Susturur)
+        # Parametreler: X Y Z Roll Pitch Yaw Parent_Frame Child_Frame
+        Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='static_lidar_tf_publisher',
+            arguments=['0.0', '0.0', '0.1', '0', '0', '0', 'vehicle_blue/chassis', 'vehicle_blue/lidar_link/gpu_lidar'],
+            parameters=[{'use_sim_time': True}],
+            output='screen'
+        ),
 
+        # 4. RViz2 Görselleştirme Ekranı
         Node(
             package='rviz2',
             executable='rviz2',
