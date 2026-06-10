@@ -30,6 +30,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
+        	'warehouse_automation = my_robot_in_warehouse.warehouse_automation:main',
         ],
     },
 )
