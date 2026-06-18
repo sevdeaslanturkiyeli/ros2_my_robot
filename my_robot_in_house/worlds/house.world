@@ -1120,6 +1120,7 @@
             <ros>
               <namespace>/</namespace>
               <remapping>~/out:=scan</remapping>
+              <argument>--ros-args -p use_sim_time:=true</argument> 
             </ros>
             <output_type>sensor_msgs/LaserScan</output_type>
             <frame_name>lidar_link</frame_name>

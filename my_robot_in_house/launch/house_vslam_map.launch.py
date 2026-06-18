@@ -23,12 +23,14 @@ def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
     
     rtabmap_db_path = os.path.join(user_home, 'ros2_myws/src/my_robot/my_robot_in_house/maps/rtabmap.db')
-    rviz_config_path = os.path.join(user_home, 'ros2_myws/src/my_robot/my_robot_in_house', package_name, 'rviz/vslam_rviz.rviz')
+    rviz_config_path = os.path.join(user_home, 'ros2_myws/src/my_robot/my_robot_in_house/rviz/vslam_map.rviz')
 
     launch_gazebo_world = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(pkg_share, 'launch', 'house_nav.launch.py')),
         launch_arguments={'use_sim_time': use_sim_time}.items()
     )
+    
+    urdf_file = '/home/sevde/ros2_myws/src/my_robot/my_robot_in_house/models/my_robot.urdf'
 
     nav2_bringup_share = get_package_share_directory('nav2_bringup')
     nav2_params_path = os.path.join(nav2_bringup_share, 'params', 'nav2_params.yaml')
@@ -47,7 +49,7 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(os.path.join(rtabmap_launch_dir, 'launch', 'rtabmap.launch.py')),
         launch_arguments={
             'database_path': rtabmap_db_path,
-            'rtabmap_args': '--localization --Vis/MinInliers 5 --RGBD/OptimizeMaxError 0 --Mem/Incremental false', 
+            'rtabmap_args': '--localization --Vis/MinInliers 0 --RGBD/OptimizeMaxError 0 --Optimizer/Strategy 1 --Mem/Incremental false',
             'localization': 'true',          
             'approx_sync': 'true',           
             'queue_size': '50',              
@@ -62,6 +64,17 @@ def generate_launch_description():
             'qos': '2'
         }.items()
     )
+    
+    robot_state = Node(
+            package='robot_state_publisher',
+            executable='robot_state_publisher',
+            name='robot_state_publisher',
+            output='screen',
+            parameters=[{
+                'use_sim_time': True, 
+                'robot_description': open(urdf_file, 'r').read()
+            }]
+        )
 
     camera_static_tf = Node(
         package='tf2_ros',
@@ -84,6 +97,7 @@ def generate_launch_description():
     ld.add_action(set_gazebo_models)
     ld.add_action(launch_gazebo_world)
     ld.add_action(launch_nav2)
+    ld.add_action(robot_state)
     ld.add_action(launch_rtabmap)
     ld.add_action(camera_static_tf)
     ld.add_action(run_rviz2)
